@@ -48,12 +48,6 @@ SaltStack automatically configure the "faulty" JUNOS device.
 ### Install Appformix. 
 This is not covered by this documentation.  
 
-### Configure Appformix for network devices monitoring. 
-
-
-### Install Appformix. 
-This is not covered by this documentation
-
 ### Configure Appformix for network devices monitoring 
 
 Appformix supports network devices monitoring using SNMP and JTI (Juniper Telemetry Interface) native streaming telemetry.  
