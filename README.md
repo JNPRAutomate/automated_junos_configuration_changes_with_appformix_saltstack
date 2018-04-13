@@ -325,6 +325,21 @@ Add the file ```templates/junos/isis.set```  to the ```organization/network_mode
 set protocols isis {{ pillar["isis_details"] }}
 ```
 
+Here's an example for the top.sls file at the root of the gitlab repository ```organization/network_parameters```: 
+```
+{% set id = salt['grains.get']('id') %} 
+{% set host = salt['grains.get']('host') %} 
+
+base:
+  '*':
+    - production
+   
+{% if host == '' %}
+  '{{ id }}':
+    - {{ id }}
+{% endif %}
+```
+
 Update the file ```production.sls``` in the repository ```organization/network_parameters``` to define the pillar ```isis_details```  
 ```
 isis_details: overload
