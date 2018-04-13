@@ -4,7 +4,7 @@ Appformix send webhook notifications to SaltStack.
 The webhook notifications provides the device name and other details.  
 SaltStack automatically configure the "faulty" JUNOS device.  
 
-![Appformix_SaltStack_Junos.png](Appformix_SaltStack_Junos.png)  
+![Appformix-SaltStack-Junos.png](Appformix-SaltStack-Junos.png)  
 
 # Demo building blocks: 
 
