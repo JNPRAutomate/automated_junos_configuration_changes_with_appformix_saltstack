@@ -202,9 +202,9 @@ The command ```salt-run reactor.list``` lists currently configured reactors. Use
 salt-run reactor.list
 ```
 
-The event ```salt/engines/hook/gitlab``` is generated and sent to the event bus when a change is done in the gitlab repository ```nora_ops/network_model```.  
+The event ```salt/engines/hook/gitlab``` is generated and sent to the event bus when a change is done in the gitlab repository ```organization/network_model```.  
 The reactor subscribes to the event 'salt/engines/hook/gitlab' and runs the sls reactor file ```/srv/reactor/proxy_inventory.sls```.   
-The sls reactor file ```/srv/reactor/proxy_inventory.sls``` creates automatically the junos proxy daemons for each devices defined in the gitlab repository ```nora_ops/network_model```.    
+The sls reactor file ```/srv/reactor/proxy_inventory.sls``` creates automatically the junos proxy daemons for each devices defined in the gitlab repository ```organization/network_model```.    
 
 Run this command to open the salt master configuration file: 
 ```
