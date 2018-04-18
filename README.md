@@ -633,7 +633,7 @@ Salt provides a runner that displays events in real-time as they are received on
 
 Either you DIY, or, depending on the alarms you set, you can use one the automation content available in the directory [trigger_alarms](trigger_alarms):  
 
-Add the file [generate_traffic.sls](trigger_alarms/generate_traffic.sls) to the directory ```junos``` of the repository ```organization/network_model```.  
+Add the file [generate_traffic.sls](trigger_alarms/generate_traffic.sls) to the directory ```junos``` of the repository ```organization/network_model``` (```gitfs_remotes```).  
 
 And run this command on the master:   
 ```
