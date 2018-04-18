@@ -226,7 +226,6 @@ Sensor Information :
 
 ```
 
-
 ## SaltStack 
 
 ### Install SaltStack 
@@ -237,6 +236,7 @@ You need a  master and a minion.
 
 The Salt Junos proxy has some requirements (```junos-eznc``` python library and other dependencies).  
 Install on the master or on a minion the dependencies to use a SaltStack proxy for Junos.  
+You need to install these dependencies on each node (master/minion) that will run a junos proxy daemon(s).  
 
 You need one junos proxy daemon per device.   
 Start one junos proxy daemon per device.  
