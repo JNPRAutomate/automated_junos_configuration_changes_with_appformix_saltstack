@@ -400,7 +400,7 @@ gitfs_remotes:
   - ssh://git@gitlab/organization/network_model.git
   
 ```
-It means Salt use the gitlab repository ```organization/network_model``` as a remote file server.  
+It means Salt uses the gitlab repository ```organization/network_model``` as a remote file server.  
 Create a directory ```inventory``` at the root of the repository ```organization/network_model``` (master branch).  
 Create a file ```inventory.yml``` in the directory inventory
 Update the  file ```inventory.yml``` with the name and ip address of your network devices. 
@@ -489,22 +489,21 @@ So:
 - external pillars (humans defined variables) are in the gitlab repository ```organization/network_parameters``` (master branch)
 - Salt uses the gitlab repository ```organization/network_model``` as a remote file server.  
 
-Add the file ```junos/isis.sls``` to the ```organization/network_model``` repository. 
+Add the file [isis.sls](isis.sls) to the directory ```junos``` of the repository ```organization/network_model```. 
 ```
 salt://templates/junos/isis.set:
   junos:
     - install_config
     - comment: "configured using SaltStack"
 ```
+The file [isis.sls](isis.sls) uses the ```junos``` module ```install_config``` with the file ```templates/junos/isis.set```.   
 
-The file ```junos/isis.sls``` uses the ```junos``` module ```install_config``` with the file ```templates/junos/isis.set``` 
-
-Add the file ```templates/junos/isis.set```  to the ```organization/network_model``` repository.
+Add the file [isis.set](isis.set) to the directory ```templates/junos``` of the repository ```organization/network_model```.  
 ```
 set protocols isis {{ pillar["isis_details"] }}
 ```
 
-Here's an example for the top.sls file at the root of the gitlab repository ```organization/network_parameters```: 
+Here's an example for the ```top.sls``` file at the root of the gitlab repository ```organization/network_parameters```: 
 ```
 {% set id = salt['grains.get']('id') %} 
 {% set host = salt['grains.get']('host') %} 
@@ -522,7 +521,6 @@ base:
 Update the file ```production.sls``` in the repository ```organization/network_parameters``` to define the pillar ```isis_details```  
 ```
 isis_details: overload
-
 ```
 
 ### Test your automation content manually
@@ -544,7 +542,6 @@ show configuration protocols isis
 ```
 show system commit
 ```
-
 
 ###  Update the Salt reactor
 
@@ -636,10 +633,12 @@ Salt provides a runner that displays events in real-time as they are received on
 
 Either you DIY, or, depending on the alarms you set, you can use one the automation content available in the directory [trigger_alarms](trigger_alarms):  
 
+Add the file [generate_traffic.sls](trigger_alarms/generate_traffic.sls) to the directory ```junos``` of the repository ```organization/network_model```.  
+
+And run this command on the master:   
 ```
 # salt "core-rtr-p-02" state.apply junos.generate_traffic
 ```
-
 
 ## Verify on the Junos device 
 
