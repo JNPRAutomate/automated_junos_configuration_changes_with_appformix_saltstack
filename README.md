@@ -229,14 +229,21 @@ Sensor Information :
 
 ## SaltStack 
 
-### Install the master and a minion.    
-This is not covered by this documentation.  
+### Install SaltStack 
 
-### Install the Junos proxy role to a minion 
+This is not covered by this documentation. 
 
-ssh to the Salt master.  
+You need a  master and a minion.  
 
-On the Salt master, list all the keys. Make sure the minion key is accepted.  
+The Salt Junos proxy has some requirements (```junos-eznc``` python library and other dependencies).  
+Install on the master or on a minion the dependencies to use a SaltStack proxy for Junos.  
+
+You need one junos proxy daemon per device.   
+Start one junos proxy daemon per device.  
+
+### Validate your SaltStack setup 
+
+Run this command on the master to verify: 
 ```
 salt-key -L
 ```
@@ -246,187 +253,7 @@ Run this command to make sure the minion is up and responding to the master. Thi
 salt -G 'roles:minion' test.ping
 ```
 
-The Salt Junos proxy has some requirements (```junos-eznc``` python library and other dependencies).    
-
-```
-# more /srv/salt/jnpr/junos_proxy.sls
-include:
-  - jnpr.linux
-
-install_pyez_deps:
-  pkg.installed:
-    - pkgs:
-        - python-pip
-        - python-lxml
-        - python-dev
-        - libssl-dev
-        - libxslt-dev
-        - python-paramiko
-
-install_pyez:
-  pip.installed:
-    - name: junos-eznc
-    - require:
-      - install_pyez_deps
-
-install_jxmlease:
-  pip.installed:
-    - name: jxmlease
-    - require:
-      - install_pyez
-
-set_grain:
-  grains.list_present:
-    - name: roles
-    - value: junos_proxy_minion
-
-copy_proxy_config:
-  file.managed:
-    - name: /etc/salt/proxy
-    - source: salt://templates/minion/proxy
-    - template: jinja
-    - defaults:
-        master: {{ grains["master"] }}
-
-# configure a systemd service to start and monitor the process as well
-{% if pillar['proxy_device'] is defined %}
-
-create_systemd_config:
-  file.managed:
-    - name: /etc/systemd/system/salt-proxy@.service
-    - source: salt://templates/minion/salt-proxy.service
-
-start_salt_proxy_process:
-  service.running:
-    - name: salt-proxy@{{ pillar['proxy_device'] }}
-    - enable: True
-
-set_proxy_child_grain:
-  grains.list_present:
-    - name: proxies
-    - value: {{ pillar['proxy_device'] }}
-
-{%  endif %}
-```
-
-Run this command on the master to install the Salt Junos proxy role on a minion. 
-Example for the minion ```svl-util-01``` 
-```
-salt "svl-util-01" state.apply jnpr.junos_proxy
-```
-
-Grains are static information collected from the minions.  
-Run this command on the master to return all grains from a minion. 
-```
-salt "svl-util-01" grains.items
-```
-You should see the grain ```roles:junos_proxy_minion```.      
-
-Run this command to check if the minions that has the ```roles:junos_proxy_minion```role are up and responding to the master:   
-```
-salt -G 'roles:junos_proxy_minion' test.ping
-```
-
-### Create junos proxy daemons 
-
-You need one junos proxy daemon per device.  
-
-Run this command to open the salt master configuration file:  
-```
-more /etc/salt/master
-```
-It should include this content:   
-```
-jnpr_config:
-  driver: yaml
-  files:
-    - /etc/salt/jnpr_config.yml
-```
-It means SaltStack configuration is kept in SDB module.  
-The file ```/etc/salt/jnpr_config.yml``` has the SaltStack configuration.  
-```
-more /etc/salt/jnpr_config.yml
-```
-This file includes:  
-```
-auth:
-  junos_username: root
-  junos_password: Clouds123
-``` 
-
-If you want to change the junos username or password, edit the file ```/etc/salt/jnpr_config.yml``` on the master.  
-
-You need one junos proxy daemon per device: Here's how to automate this using the Salt reactor.   
-
-The reactor binds sls files to event tags.  
-The reactor has a list of event tags to be matched, and each event tag has a list of reactor SLS files to be run.  
-So these sls files define the SaltStack reactions.  
-Update the reactor with this content:   
-This reactor binds ```salt/engines/hook/gitlab``` to ```/srv/reactor/proxy_inventory.sls``` 
-```
-more /etc/salt/master.d/reactor.conf
-reactor:
-   - 'salt/engines/hook/gitlab':
-     - /srv/reactor/proxy_inventory.sls
-```
-
-Then restart the Salt master:
-```
-service salt-master stop
-service salt-master start
-```
-
-The command ```salt-run reactor.list``` lists currently configured reactors. Use it to verify the reactor actual configuration  
-```
-salt-run reactor.list
-```
-
-The event ```salt/engines/hook/gitlab``` is generated and sent to the event bus when a change is done in the gitlab repository ```organization/network_model```.  
-The reactor subscribes to the event 'salt/engines/hook/gitlab' and runs the sls reactor file ```/srv/reactor/proxy_inventory.sls```.   
-The sls reactor file ```/srv/reactor/proxy_inventory.sls``` creates automatically the junos proxy daemons for each devices defined in the gitlab repository ```organization/network_model```.    
-
-Run this command to open the salt master configuration file: 
-```
-more /etc/salt/master
-```
-It includes this content: 
-```
-fileserver_backend:
-  - git
-  - roots
-```
-```
-gitfs_remotes:
-  - ssh://git@gitlab/organization/network_model.git
-  
-```
-It means Salt uses the gitlab repository ```organization/network_model``` as a remote file server.  
-Create a directory ```inventory``` at the root of the repository ```organization/network_model``` (master branch).  
-Create a file ```inventory.yml``` in the directory inventory
-Update the  file ```inventory.yml``` with the name and ip address of your network devices. 
-Example: 
-```
----
-network_devices:
-  dc-vmx-1: 172.30.52.85
-  dc-vmx-2: 172.30.52.86
-  vmx-1-vcp: 172.30.52.155 
-  vmx-2-vcp: 172.30.52.156
-  core-rtr-p-02: 172.30.52.152
-``` 
-
-This automatically created a junos proxy daemon for each device in the ```inventory.yml``` file.  
-These daemons are in minions that has the ```junos_proxy_minion``` role  
-Each proxy has the same name as the device it controls.  
-
-### Validate the junos proxies
-
-Run this command on the master to verify: 
-```
-salt-key -L
-```
-
-Select one the proxy and run these additionnal tests.  
+Select one the junos proxy and run these additionnal tests.  
 Example with the proxy ```core-rtr-p-02``` (it manages the network device ```core-rtr-p-02```)
 ```
 salt core-rtr-p-02 test.ping
@@ -434,28 +261,11 @@ salt core-rtr-p-02 test.ping
 ```
 salt core-rtr-p-02 junos.cli "show version"
 ```
+### Edit the SaltStack master configuration file 
 
-Run this command to open the salt master configuration file: 
+Edit the salt master configuration file:  
 ```
-more /etc/salt/master
-```
-It includes this content: 
-```
-ext_pillar:
-  - git:
-    - master git@gitlab:organization/network_parameters.git
-```
-
-Pillars are variables. External pillars are in the gitlab repository ```organization/network_parameters``` (master branch)
-
-Verify the pillars automatically created for the proxies. 
-
-
-### Create the junos automation content
-
-ssh to the Salt master and open the salt master configuration file:  
-```
-more /etc/salt/master
+vi /etc/salt/master
 ```
 Make sure the master configuration file has these details:  
 ```
@@ -480,16 +290,19 @@ fileserver_backend:
 ```
 gitfs_remotes:
   - ssh://git@gitlab/organization/network_model.git
-  
 ```
 
 So: 
 - the Salt master is listening webhooks on port 5001. It generates equivalents ZMQ messages to the event bus
 - runners are in the directory ```/srv/runners``` on the Salt master
-- external pillars (humans defined variables) are in the gitlab repository ```organization/network_parameters``` (master branch)
+- external pillars (variables) are in the gitlab repository ```organization/network_parameters``` (master branch)
 - Salt uses the gitlab repository ```organization/network_model``` as a remote file server.  
 
-Add the file [isis.sls](isis.sls) to the directory ```junos``` of the repository ```organization/network_model```. 
+### Create the junos automation content
+
+#### junos automation content in gitfs_remotes
+
+Add the file [isis.sls](isis.sls) to the directory ```junos``` of the gitlab repository ```organization/network_model``` (```gitfs_remotes```). 
 ```
 salt://templates/junos/isis.set:
   junos:
@@ -498,12 +311,14 @@ salt://templates/junos/isis.set:
 ```
 The file [isis.sls](isis.sls) uses the ```junos``` module ```install_config``` with the file ```templates/junos/isis.set```.   
 
-Add the file [isis.set](isis.set) to the directory ```templates/junos``` of the repository ```organization/network_model```.  
+Add the file [isis.set](isis.set) to the directory ```templates/junos``` of the gitlab repository ```organization/network_model``` (```gitfs_remotes```).  
 ```
 set protocols isis {{ pillar["isis_details"] }}
 ```
 
-Here's an example for the ```top.sls``` file at the root of the gitlab repository ```organization/network_parameters```: 
+#### junos automation content in ext_pillar
+
+Here's an example for the ```top.sls``` file at the root of the gitlab repository ```organization/network_parameters``` (```ext_pillar```):  
 ```
 {% set id = salt['grains.get']('id') %} 
 {% set host = salt['grains.get']('host') %} 
@@ -518,7 +333,7 @@ base:
 {% endif %}
 ```
 
-Update the file ```production.sls``` in the repository ```organization/network_parameters``` to define the pillar ```isis_details```  
+Update the file ```production.sls``` in the repository ```organization/network_parameters``` (```ext_pillar```) to define the pillar ```isis_details```  
 ```
 isis_details: overload
 ```
