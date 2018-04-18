@@ -632,7 +632,26 @@ Salt provides a runner that displays events in real-time as they are received on
 # salt-run state.event pretty=True
 ```
 
-Trigger an alarm  to get a webhook notification sent by Appformix to SaltStack 
+## Trigger an alarm  to get a webhook notification sent by Appformix to SaltStack 
+
+Either you DIY, or, depending on the alarms you set, you can use one of the automation content available in the directory [trigger_alarms](trigger_alarms):  
+
+```
+# salt "core-rtr-p-02" state.apply junos.generate_traffic
+```
+```
+# salt "core-rtr-p-02" state.apply junos.change_int_speed
+# salt "core-rtr-p-02" junos.cli "show system commit"
+# salt "core-rtr-p-02" junos.cli "show configuration | compare rollback 1"
+# salt "core-rtr-p-02" junos.cli "show configuration interfaces ge-0/0/1"
+```
+```
+# salt "core-rtr-p-02" state.apply junos.change_mtu
+# salt "core-rtr-p-02" junos.cli "show system commit"
+# salt "core-rtr-p-02" junos.cli "show configuration | compare rollback 1"
+# salt "core-rtr-p-02" junos.cli "show configuration interfaces ge-0/0/1"
+```
+
 
 ## Verify on the Junos device 
 
