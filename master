@@ -1,0 +1,15 @@
+engines:
+  - webhook:
+      port: 5001
+
+ext_pillar:
+  - git:
+    - master git@gitlab_ip_address:organization/network_parameters.git
+
+fileserver_backend:
+  - git
+
+
+gitfs_remotes:
+  - ssh://git@gitlab_ip_address/organization/network_model.git
+

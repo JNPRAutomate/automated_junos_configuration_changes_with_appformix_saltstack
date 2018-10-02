@@ -1,4 +1,4 @@
-salt://templates/junos/isis.set:
+salt://isis.set:
   junos:
     - install_config
     - comment: "configured using SaltStack"
